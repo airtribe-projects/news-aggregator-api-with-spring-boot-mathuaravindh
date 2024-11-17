@@ -17,9 +17,10 @@ Registers a new user with email, username, and password.
 
 ```json
 {
-    "username": "john_doe",
-    "email": "john@example.com",
-    "password": "password123"
+  "username": "Ceaser",
+  "password": "password123",
+  "email": "Ceaser@example.com",
+   "preferences": ["TECHNOLOGY", "POLITICS"]
 }
 ```
 
@@ -153,6 +154,7 @@ The user can update their preferences to choose topics like:
 - BUSINESS
 
 These preferences will dictate the news articles retrieved from the `/api/news` endpoint.
+Preferences will be autoloaded into the DB from the predefined enum store on application start.
 
 ## Running the Application
 
