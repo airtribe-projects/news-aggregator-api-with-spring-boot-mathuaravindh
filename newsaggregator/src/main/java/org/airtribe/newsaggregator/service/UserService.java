@@ -14,6 +14,8 @@ import org.springframework.web.server.ResponseStatusException;
 import org.airtribe.newsaggregator.dto.*;
 
 import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -60,22 +62,23 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public void assignPreferencesToUser(Long userId, Set<Long> preferenceIds) {
-        // Fetch the user by id
-        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
-
-        // Fetch the preferences by ids
-        Set<Preference> preferences = new HashSet<>();
-        for (Long preferenceId : preferenceIds) {
-            Preference preference = preferenceRepository.findById(preferenceId)
-                    .orElseThrow(() -> new RuntimeException("Preference not found"));
-            preferences.add(preference);
+    public Set<Preference> assignPreferencesToUser(User user, List<String> preferences) {
+        Set<Preference> newPreferences = new HashSet<>();
+        for (String categoryName : preferences) {
+            Optional<Preference> preference = preferenceRepository.findByCategory(NewsCategory.valueOf(categoryName));
+            preference.ifPresent(newPreferences::add);
         }
-
         // Set the preferences on the user
-        user.setPreferences(preferences);
+        user.setPreferences(newPreferences);
 
         // Save the updated user
         userRepository.save(user);
+
+        return newPreferences;
+    }
+
+    public Optional<User> getUserByUserName(String userName)
+    {
+        return userRepository.findByUsername(userName);
     }
 }
