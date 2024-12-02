@@ -54,6 +54,13 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
+                .headers(httpSecurityHeadersConfigurer ->
+                {
+                    httpSecurityHeadersConfigurer.frameOptions(frameOptionsConfig ->
+                    {
+                        frameOptionsConfig.disable();
+                    });
+                })
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers("/h2-console/**","/api/register","api/login").permitAll()
                         .anyRequest().authenticated()

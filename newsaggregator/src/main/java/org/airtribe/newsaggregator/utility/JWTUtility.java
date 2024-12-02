@@ -11,12 +11,16 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+import org.airtribe.newsaggregator.entity.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import javax.crypto.SecretKey;
+
 @Service
 public class JWTUtility {
+
     @Value("${jwt.secret}")
     private String secretKey;
 
@@ -32,12 +36,22 @@ public class JWTUtility {
         return claimsResolver.apply(claims);
     }
 
-    public String generateToken(UserDetails userDetails) {
-        return generateToken(new HashMap<>(), userDetails);
-    }
+    public String generateToken(User user) {
+        Key key = getSignInKey();
 
-    public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
-        return buildToken(extraClaims, userDetails, jwtExpiration);
+        // Print raw byte array
+        byte[] keyBytes = key.getEncoded();
+        System.out.print("Raw Key Bytes: ");
+        for (byte b : keyBytes) {
+            System.out.printf("%02x ", b);
+        }
+        return Jwts.builder()
+                .setSubject(user.getUsername()) // Use username as the subject
+                .claim("email", user.getEmail()) // Add email as a custom claim
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + getExpirationTime()))
+                .signWith(SignatureAlgorithm.HS512, getSignInKey())
+                .compact();
     }
 
     public long getExpirationTime() {
@@ -84,5 +98,21 @@ public class JWTUtility {
     private Key getSignInKey() {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    public String extractEmail(String token) {
+        Key key = getSignInKey();
+
+        // Print raw byte array
+        byte[] keyBytes = key.getEncoded();
+        System.out.print("Raw Key Bytes: ");
+        for (byte b : keyBytes) {
+            System.out.printf("%02x ", b);
+        }
+        Claims claims = Jwts.parser()
+                .setSigningKey(getSignInKey())
+                .parseClaimsJws(token)
+                .getBody();
+        return claims.get("email", String.class);
     }
 }

@@ -1,5 +1,7 @@
 package org.airtribe.newsaggregator.service;
 
+import org.airtribe.newsaggregator.dto.newsapiresponse.Article;
+import org.airtribe.newsaggregator.dto.newsapiresponse.NewsApiResponse;
 import org.airtribe.newsaggregator.entity.Preference;
 import org.airtribe.newsaggregator.entity.User;
 import org.airtribe.newsaggregator.repository.UserRepository;
@@ -9,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -22,10 +25,10 @@ public class NewsService {
     @Value("${newsapi.api.key}")
     private String newsApiKey;
 
-    private static final String NEWS_API_URL = "https://newsapi.org/v2/top-headlines?category=%s&apiKey=%s";
+    private static final String NEWS_API_URL = "https://newsapi.org/v2/top-headlines?apiKey=%s%s";
 
-    public ResponseEntity<String> fetchNewsByUserPreferences(String username) {
-        Optional<User> userOptional = userRepository.findByUsername(username);
+    public ResponseEntity<?> fetchNewsByUserPreferences(String email) {
+        Optional<User> userOptional = userRepository.findByEmail(email);
 
         if (userOptional.isEmpty()) {
             return ResponseEntity.status(404).body("User not found");
@@ -40,17 +43,18 @@ public class NewsService {
 
         // Build the categories query parameter by joining preference categories
         String categories = preferences.stream()
-                .map(pref -> pref.getCategory().name().toLowerCase())
-                .collect(Collectors.joining(","));
+                .map(pref -> "&category=" + pref.getCategory().name().toLowerCase())
+                .collect(Collectors.joining());
 
-        String apiUrl = String.format(NEWS_API_URL, categories, newsApiKey);
+        String apiUrl = String.format(NEWS_API_URL, newsApiKey, categories);
 
         // Call the News API
         RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<String> newsApiResponse = restTemplate.getForEntity(apiUrl, String.class);
+        ResponseEntity<NewsApiResponse> newsApiResponse = restTemplate.getForEntity(apiUrl, NewsApiResponse.class);
 
-        if (newsApiResponse.getStatusCode().is2xxSuccessful()) {
-            return ResponseEntity.ok(newsApiResponse.getBody());
+        if (newsApiResponse.getBody() != null && "ok".equals(newsApiResponse.getBody().getStatus())) {
+            List<Article> articles = newsApiResponse.getBody().getArticles();
+            return ResponseEntity.ok(articles);
         } else {
             return ResponseEntity.status(newsApiResponse.getStatusCode()).body("Failed to fetch news");
         }

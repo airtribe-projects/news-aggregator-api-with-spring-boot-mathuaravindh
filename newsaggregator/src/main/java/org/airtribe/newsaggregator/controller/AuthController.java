@@ -1,5 +1,6 @@
 package org.airtribe.newsaggregator.controller;
 
+import jakarta.validation.Valid;
 import org.airtribe.newsaggregator.dto.LoginRequestDTO;
 import org.airtribe.newsaggregator.dto.LoginResponseDTO;
 import org.airtribe.newsaggregator.entity.User;
@@ -23,7 +24,7 @@ public class AuthController {
     }
 
     @PostMapping("api/login")
-    public ResponseEntity<LoginResponseDTO> authenticate(@RequestBody LoginRequestDTO loginUserDto){
+    public ResponseEntity<LoginResponseDTO> authenticate(@Valid @RequestBody LoginRequestDTO loginUserDto){
         User authenticatedUser = authenticationService.authenticate(loginUserDto);
 
         String jwtToken = jwtUtility.generateToken(authenticatedUser);

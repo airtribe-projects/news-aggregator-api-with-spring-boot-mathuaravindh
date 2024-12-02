@@ -38,6 +38,11 @@ public class User implements UserDetails {
     )
     private Set<Preference> preferences = new HashSet<>();
 
+
+    private String verificationToken;
+
+    private Boolean isVeriified;
+
     // Getters and setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

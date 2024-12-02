@@ -49,23 +49,13 @@ class UserController {
     @PutMapping("/api/preferences")
     public ResponseEntity<Set<Preference>> assignUserPreferences(@RequestBody PreferencesRequestDTO preferencesRequestDTO) {
         // Get the currently authenticated user
-        //Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        //String username = authentication.getName();
-
-        // Get the current authenticated user
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !(authentication.getPrincipal() instanceof UserDetails)) {
-            return ResponseEntity.status(401).body(null);
-        }
+        String username = authentication.getName();
 
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        Optional<User> userOptional = userService.getUserByUserName(userDetails.getUsername());
-
-        if (userOptional.isEmpty()) {
-            return ResponseEntity.status(404).body(null);
-        }
-
-        User user = userOptional.get();
+        // Find the user by username
+        User user = userService.getUserByUserName(username).orElseThrow(
+                () -> new RuntimeException("User not found")
+        );
 
         Set<Preference> newPreferences = userService.assignPreferencesToUser(user, preferencesRequestDTO.getPreferences());
 

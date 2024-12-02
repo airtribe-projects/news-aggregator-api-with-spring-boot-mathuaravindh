@@ -36,18 +36,12 @@ public class NewsController {
     public ResponseEntity<?> getNewsBasedOnPreferences() {
         // Get the current authenticated user
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !(authentication.getPrincipal() instanceof UserDetails)) {
-            return ResponseEntity.status(401).body("User not authenticated");
-        }
+        String username = authentication.getName();
 
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        Optional<User> userOptional = userService.getUserByUserName(userDetails.getUsername());
-
-        if (userOptional.isEmpty()) {
-            return ResponseEntity.status(404).body("User not found");
-        }
-
-        User user = userOptional.get();
+        // Find the user by username
+        User user = userService.getUserByUserName(username).orElseThrow(
+                () -> new RuntimeException("User not found")
+        );
 
         return ResponseEntity.ok(newsService.fetchNewsByUserPreferences(user.getEmail()));
 
